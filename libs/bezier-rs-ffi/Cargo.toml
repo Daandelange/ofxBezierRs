@@ -1,0 +1,24 @@
+[package]
+name = "bezier-rs-ffi"
+version = "0.1.0"
+rust-version = "1.66.0"
+edition = "2021"
+authors = ["Daan de Lange"]
+description = "C++ Wrapper for bezier-rs"
+license = "MIT"
+keywords = ["bezier", "curve", "geometry", "2d", "graphics"]
+categories = ["graphics", "mathematics"]
+homepage = "https://github.com/daandelange/ofxBezierRs"
+repository = "https://github.com/daandelange/ofxBezierRs"
+
+[dependencies]
+bezier-rs = "0.2.0"
+glam = "0.22"
+#glam = { version = "0.22", features = ["serde"] }
+#libc = "0.2"
+
+[lib]
+#name = "bezier_rs_ffi"
+path = "src/lib.rs"
+crate-type = ["cdylib", "staticlib"]
+
