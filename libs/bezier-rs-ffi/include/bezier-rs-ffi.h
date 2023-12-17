@@ -91,10 +91,10 @@ void bezrs_shape_rotate(bezrsShape *_shape, double _angle, bezrsPos *_center_poi
 
 /// Outlines a shape or path.
 /// Important: Closed shapes will return a new shape instance, to be destroyed correctly.
-bezrsShape *outline(bezrsShape *_shape,
-                    double distance,
-                    bezrsJoinType join,
-                    bezrsCapType cap,
-                    double miter_limit);
+bezrsShape *bezrs_shape_outline(bezrsShape *_shape,
+                                double distance,
+                                bezrsJoinType join,
+                                bezrsCapType cap,
+                                double miter_limit);
 
 } // extern "C"

@@ -386,7 +386,7 @@ pub extern "C" fn bezrs_shape_rotate(_shape: *mut bezrsShape, _angle: f64, _cent
 #[no_mangle]
 /// Outlines a shape or path.
 /// Important: Closed shapes will return a new shape instance, to be destroyed correctly.
-pub extern "C" fn outline(_shape: *mut bezrsShape, distance: f64, join: bezrsJoinType, cap: bezrsCapType, miter_limit: f64) -> *mut bezrsShape {
+pub extern "C" fn bezrs_shape_outline(_shape: *mut bezrsShape, distance: f64, join: bezrsJoinType, cap: bezrsCapType, miter_limit: f64) -> *mut bezrsShape {
 	let shape = unsafe {
         assert!(!_shape.is_null());
         &mut *_shape
