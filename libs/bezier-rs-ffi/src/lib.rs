@@ -295,38 +295,64 @@ pub extern "C" fn bezrs_shape_create(beziers_opt: Option<&bezrsShapeRaw>, closed
 
 #[no_mangle]
 /// To destroy an internal shape handle when you don't need it anymore.
-pub extern "C" fn bezrs_shape_destroy(ptr: *mut bezrsShape) {
-    if ptr.is_null() {
+pub extern "C" fn bezrs_shape_destroy(_bezier: *mut bezrsShape) {
+    if _bezier.is_null() {
         return;
     }
     unsafe {
-        let _ = Box::from_raw(ptr);
+        let _ = Box::from_raw(_bezier);
     }
 }
 
 #[no_mangle]
-/// Not implemented yet !
-pub extern "C" fn bezrs_shape_add_handle(ptr: *mut bezrsShape) {
-    let _shape = unsafe {
-        assert!(!ptr.is_null());
-        &mut *ptr
+/// Inserts a bezier to the shape at a given position
+pub extern "C" fn bezrs_shape_insert_bezier(_shape: *mut bezrsShape, _bez : bezrsBezierHandle, _pos : usize) {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
     };
-    // todo
+    shape.sub_path.insert_manipulator_group(_pos, _bez.to_internal());
+}
+
+#[no_mangle]
+/// Appends a bezier to the shape
+pub extern "C" fn bezrs_shape_append_bezier(_shape: *mut bezrsShape, _bez : bezrsBezierHandle) {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+    let pos = shape.sub_path.len();
+    shape.sub_path.insert_manipulator_group(pos, _bez.to_internal());
+}
+
+#[no_mangle]
+/// Reverses the winding order of bezier handles
+pub extern "C" fn bezrs_shape_reverse_winding(_shape: *mut bezrsShape) {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+    shape.sub_path = shape.sub_path.reverse();
 }
 
 // Retrieve shape data
 #[no_mangle]
 /// To retrieve the data of an internal shape handle.
-pub extern "C" fn bezrs_shape_return_handle_data(ptr: *mut bezrsShape) -> bezrsShapeRaw {
-    let _shape = unsafe {
-        assert!(!ptr.is_null());
-        &mut *ptr
+pub extern "C" fn bezrs_shape_return_handle_data(_shape: *mut bezrsShape) -> bezrsShapeRaw {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
     };
 
+    // Todo: add a dirty flag to prevent recomputing for nothing ?
+    shape.beziers = sub_path_to_vec(&shape.sub_path);
+
     return bezrsShapeRaw {
-    	data: _shape.beziers.as_mut_ptr(),
-    	len: _shape.beziers.len(),
-    	closed: _shape.sub_path.closed(),
+    	// data: shape.sub_path.manipulator_groups().as_mut_ptr(),
+    	// len: shape.sub_path.manipulator_groups().len(),
+    	data: shape.beziers.as_mut_ptr(),
+    	len: shape.beziers.len(),
+    	closed: shape.sub_path.closed(),
     };
 }
 
@@ -335,15 +361,57 @@ pub extern "C" fn bezrs_shape_return_handle_data(ptr: *mut bezrsShape) -> bezrsS
 // Returning a vec to c++ : https://www.reddit.com/r/rust/comments/aca3do/ffi_how_do_you_pass_a_vec_to_c/
 #[no_mangle]
 /// Offset a shape. When the shape is winded clockwise : positive offset goes inside, negative is outside.
-pub extern "C" fn bezrs_cubic_bezier_offset(shape: &mut bezrsShape, offset : f64, join_type : bezrsJoinType, join_mitter : f64 ) -> bool {
+pub extern "C" fn bezrs_cubic_bezier_offset(_shape: *mut bezrsShape, offset : f64, join_type : bezrsJoinType, join_mitter : f64 ) {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
 
 	// Offset real object
-	let offset_curve = shape.sub_path.offset(offset, parse_join(join_type, Some(join_mitter))); // Bevel, Round, Mitter(limit:f64)
-
-	// Copy shape data
-	shape.sub_path = offset_curve;
-	shape.beziers = sub_path_to_vec(&shape.sub_path);
-
-	true // tmp return
+	shape.sub_path = shape.sub_path.offset(offset, parse_join(join_type, Some(join_mitter))); // Bevel, Round, Mitter(limit:f64)
 }
 
+#[no_mangle]
+/// Rotates the whole shape
+pub extern "C" fn bezrs_shape_rotate(_shape: *mut bezrsShape, _angle: f64, _center_point : *mut bezrsPos ) {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+    let center_point = if _center_point.is_null() { DVec2::new(0.0,0.0) } else { unsafe { _center_point.as_ref().unwrap().to_dvec2() } };
+    shape.sub_path = shape.sub_path.rotate_about_point(_angle, center_point);
+}
+
+#[no_mangle]
+/// Outlines a shape or path.
+/// Important: Closed shapes will return a new shape instance, to be destroyed correctly.
+pub extern "C" fn outline(_shape: *mut bezrsShape, distance: f64, join: bezrsJoinType, cap: bezrsCapType, miter_limit: f64) -> *mut bezrsShape {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+    // Convert arguments
+	let join = parse_join(join, Some(miter_limit));
+	let cap = parse_cap(cap);
+
+	// Note : A path outline returns 1 subpath. If it was a shape (closed), a 2nd one is received.
+	let (outline_piece1, outline_piece2) = shape.sub_path.outline(distance, join, cap);
+
+	// Update 1st result as usual
+	shape.sub_path = outline_piece1;
+
+	// Return 2nd result as a shape
+	if shape.sub_path.closed() {
+		if let Some(outline) = outline_piece2 {
+			// Return empty path/shape
+			let boxed_shape = Box::new(bezrsShape::new(outline));
+
+			// Return raw pointer to the allocated memory
+    		return Box::into_raw(boxed_shape);
+    	}
+	}
+	
+	return std::ptr::null_mut();
+}

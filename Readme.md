@@ -8,7 +8,9 @@ Only tested on osx 10.12 + OF 0.11.2, the binaries are not yet bundled.
 
 Functions :
 - [x] Shape offset 
-- [ ] Shape outline
+- [x] Shape outline
+- [x] Shape rotation
+- [x] Reversing winding direction
 
 ## Shapes
 The shape object is close to the underlying one used in bezier-rs.  

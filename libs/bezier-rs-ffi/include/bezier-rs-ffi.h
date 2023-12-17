@@ -14,6 +14,13 @@
 #include <ostream>
 #include <new>
 
+/// Cap type enum
+enum class bezrsCapType {
+  Butt,
+  Round,
+  Square,
+};
+
 /// Join type enum
 enum class bezrsJoinType {
   Bevel,
@@ -59,18 +66,35 @@ extern "C" {
 bezrsShape *bezrs_shape_create(const bezrsShapeRaw *beziers_opt, bool closed);
 
 /// To destroy an internal shape handle when you don't need it anymore.
-void bezrs_shape_destroy(bezrsShape *ptr);
+void bezrs_shape_destroy(bezrsShape *_bezier);
 
-/// Not implemented yet !
-void bezrs_shape_add_handle(bezrsShape *ptr);
+/// Inserts a bezier to the shape at a given position
+void bezrs_shape_insert_bezier(bezrsShape *_shape, bezrsBezierHandle _bez, uintptr_t _pos);
+
+/// Appends a bezier to the shape
+void bezrs_shape_append_bezier(bezrsShape *_shape, bezrsBezierHandle _bez);
+
+/// Reverses the winding order of bezier handles
+void bezrs_shape_reverse_winding(bezrsShape *_shape);
 
 /// To retrieve the data of an internal shape handle.
-bezrsShapeRaw bezrs_shape_return_handle_data(bezrsShape *ptr);
+bezrsShapeRaw bezrs_shape_return_handle_data(bezrsShape *_shape);
 
 /// Offset a shape. When the shape is winded clockwise : positive offset goes inside, negative is outside.
-bool bezrs_cubic_bezier_offset(bezrsShape *shape,
+void bezrs_cubic_bezier_offset(bezrsShape *_shape,
                                double offset,
                                bezrsJoinType join_type,
                                double join_mitter);
+
+/// Rotates the whole shape
+void bezrs_shape_rotate(bezrsShape *_shape, double _angle, bezrsPos *_center_point);
+
+/// Outlines a shape or path.
+/// Important: Closed shapes will return a new shape instance, to be destroyed correctly.
+bezrsShape *outline(bezrsShape *_shape,
+                    double distance,
+                    bezrsJoinType join,
+                    bezrsCapType cap,
+                    double miter_limit);
 
 } // extern "C"
