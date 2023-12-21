@@ -8,6 +8,7 @@ bezrsPos to_bezrsPos(glm::vec2 _pos){
     //return DVec2(_pos.x, _pos.y);
 }
 
+#ifdef OFXBEZRS_DEFINE_IMGUI_HELPERS
 #include "imgui.h"
 #include <map>
 #include <string>
@@ -71,3 +72,4 @@ void ImGuiEx::ofxBezierRsOffsetOptions(const char* _name, double& _offset, bezrs
     ImGuiEx::ofxBezierRsJointCombo("Join Type", _joinType, _mitter);
     ImGui::PopID();
 }
+#endif

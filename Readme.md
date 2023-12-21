@@ -56,6 +56,8 @@ int main(){
 }
 ```
 
+There's a set of ImGui helpers available, to opt-in, define `OFXBEZRS_DEFINE_IMGUI_HELPERS`.
+
 ## Development
 To build a new library binary for your platform, make sure that you have [Rust](https://www.rust-lang.org/tools/install) installed.
 - `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
