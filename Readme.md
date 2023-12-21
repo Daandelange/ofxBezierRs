@@ -35,7 +35,7 @@ int main(){
 
 	// Build an array-compatible list of beziers handles.
 	// Must remain accessible when calling bez_rs_shape_create.
-	std::vector<bezrsBezierHandle> bezierHandles = { ... };
+	std::vector<bezrsBezierHandle> bezierHandles = { ... }; // <-- Fill this with your vector drawing
 	// Make raw handle
 	bezrsShapeRaw bezRsShapeInput = { bezierHandles.data(), bezierHandles.size(), true };
 	// Build internal/opaque shape from raw input
@@ -45,9 +45,12 @@ int main(){
 	// Retrieve resulting shape
 	bezrsShapeRaw offsetShapeRaw = bezrs_shape_return_handle_data(bezRsShape);
 	// Use result
+	size_t bhi = 0;
 	for (const bezrsBezierHandle* bh = offsetShapeRaw.data; bhi < offsetShapeRaw.len; bh++){
 		ofDrawCircle(bh->pos.x, bh->pos.y, 5.f); // draw
 		// or copy to own variable
+
+		bhi++;
 	}
 	// Destroy shape handle
 	bezrs_shape_destroy(bezRsShape);
