@@ -41,7 +41,7 @@ int main(){
 	// Build internal/opaque shape from raw input
 	bezrsShape* bezRsShape = bezrs_shape_create( &bezRsShapeInput, true);
 	// Transform the shape
-	bezrs_cubic_bezier_offset(bezRsShape, 10, bezrs_join_type::Round, 0);
+	bezrs_cubic_bezier_offset(bezRsShape, 10, bezrsJoinType::Round, 0);
 	// Retrieve resulting shape
 	bezrsShapeRaw offsetShapeRaw = bezrs_shape_return_handle_data(bezRsShape);
 	// Use result
