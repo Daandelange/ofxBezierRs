@@ -22,3 +22,11 @@ glam = "0.22"
 path = "src/lib.rs"
 crate-type = ["cdylib", "staticlib"]
 
+[profile.release]
+opt-level = 3 # 3 for speed, "z" for space
+lto = true # Optimize by stripping dead code etc
+debug = 0
+strip = true # "debuginfo"
+codegen-units = 1 # force enable all, but slower
+panic = "abort" # Less detailed error messages for smaller binary
+
