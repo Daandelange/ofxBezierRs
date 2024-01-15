@@ -14,7 +14,8 @@ osx:
 	ADDON_LIBS = libs/bezier-rs-ffi/lib/osx/libbezier_rs_ffi.dylib
 
 linux64:
-	#ADDON_LDFLAGS = -lbezierrs
+	#ADDON_LDFLAGS = -lbezier_rs_ffi
+    ADDON_LIBS = libs/bezier-rs-ffi/lib/linux64/libbezier_rs_ffi.so
 
 linuxarmv7l:
 
