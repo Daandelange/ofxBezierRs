@@ -3,8 +3,8 @@ An OpenFrameworks wrapper for [bezier-rs](https://github.com/GraphiteEditor/Grap
 
 ## Early state
 Bezier-rs provides [plenty of functions](https://graphite.rs/libraries/bezier-rs/), not all are implemented yet.  
-Right now, see this addon as a proof-of-concept for using lib bezier-rs with C++ code.
-Only tested on osx 10.12 + OF 0.11.2, the binaries are not yet bundled.
+Right now, consider this addon as a proof-of-concept for using libBezierRs with C++ code.  
+Tested on `osx 10.12 + OF 0.11.2` and `linux + OF 0.11.2`, the binaries are not yet bundled.
 
 Functions :
 - [x] Shape offset 
@@ -68,7 +68,7 @@ To build a new library binary for your platform, make sure that you have [Rust](
 Build the library :
 - `cd ./bezier-rs-ffi/`
 - `cargo build --release`
-- Copy files to `ofxBezierRs/libs/bezier-rs-ffi/...`
+- Copy lib files to `ofxBezierRs/libs/bezier-rs-ffi/lib/PLATFORM/libbezier_rs_ffi.a|dylib|so` (PLATFORM: osx, linux64, etc.)
 
 Generate bindings :
 - Install or update cbindgen : `cargo install --force cbindgen`
