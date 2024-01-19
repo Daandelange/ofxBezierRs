@@ -171,7 +171,7 @@ impl bezrsBezierHandle {
    	// Converts to internal format
    	// todo: no unsafe ?
 	pub(crate) fn to_internal(&self) -> ManipulatorGroup<EmptyId> {
-		ManipulatorGroup { 
+		ManipulatorGroup {
 			anchor: self.pos.to_dvec2(),
 			in_handle: Some(self.in_bez.to_dvec2()),
 			out_handle: Some(self.out_bez.to_dvec2()),
@@ -214,7 +214,7 @@ pub(crate) fn sub_path_to_vec(sub_path : &Subpath<EmptyId>) -> Vec<bezrsBezierHa
 #[repr(C)]
 pub struct bezrsShapeRaw {
 	// Ptr to std::vec<bezrsBezierHandle> (if c++ owned) or Vec<bezrsBezierHandle> (if rust owned)
-    data: *const bezrsBezierHandle, 
+    data: *const bezrsBezierHandle,
     /// count of data items
     len: usize,
     /// if true, behave as shape, otherwise behave as path.
@@ -243,7 +243,7 @@ impl bezrsShape {
 
 #[no_mangle]
 // note : Option is for allowing nullptr from c++
-/// Create a shape instance in rust memory : needs to be freed afterwards.
+/// Create a shape instance in rust memory : needs to be freed afterwards. Also, `beziers_opt` needs to remain valid (and static) until freed.
 pub extern "C" fn bezrs_shape_create(beziers_opt: Option<&bezrsShapeRaw>, closed: bool) -> *mut bezrsShape {
 
     if let Some(beziers_raw) = beziers_opt {
@@ -267,7 +267,7 @@ pub extern "C" fn bezrs_shape_create(beziers_opt: Option<&bezrsShapeRaw>, closed
 
             // Create a Shape from the handles
             // Note : Bezier-rs panics when < 2 subpath items and closed = false
-            let safe_closed : bool = closed && (beziers_raw.len >= 2);
+            let safe_closed : bool = closed && (beziers_raw.len > 1);
 	        let shape = bezrsShape {
 	            sub_path: Subpath::<EmptyId>::new(manipulator_groups, safe_closed),
 	            beziers: beziers_slice.to_vec(),
@@ -412,6 +412,6 @@ pub extern "C" fn bezrs_shape_outline(_shape: *mut bezrsShape, distance: f64, jo
     		return Box::into_raw(boxed_shape);
     	}
 	}
-	
+
 	return std::ptr::null_mut();
 }
