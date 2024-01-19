@@ -3,13 +3,9 @@
 #include "ofMain.h"
 #include <vector>
 #include "ofxBezierRs.h"
+#include "bezierShape.h"
+#include "bezrsToys.h"
 
-struct ofxBezierShape {
-	std::vector<bezrsBezierHandle> beziers = {};
-	bool bChanged = false;
-
-	void draw(bool connectLast=true, ofColor lineColor=ofColor::black, ofColor bezierColor=ofColor::blue);
-};
 
 class ofApp : public ofBaseApp{
 
@@ -30,9 +26,18 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
-		ofxBezierShape shape;
-		ofxBezierShape offsetShape;
+		bezierShape shape;
+		bezierShape fxShape;
 
 		glm::vec2 clickedPos = {0,0};
 		glm::vec2 bezierPreview = {0,0};
+
+		// Demo slider
+		unsigned int currentToy = 0;
+		vector<bezrsToy*> toys;
+
+		bool bShowHelp = true;
+		bool bShowInfo = true;
+		bool bAnimate = true;
+		//bool bShowNumbers = true;
 };

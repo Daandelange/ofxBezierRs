@@ -15,6 +15,10 @@ Project{
             'src/main.cpp',
             'src/ofApp.cpp',
             'src/ofApp.h',
+            'src/bezrsToys.cpp',
+            'src/bezrsToys.h',
+            'src/bezierShape.cpp',
+            'src/bezierShape.h',
         ]
 
         of.addons: [
