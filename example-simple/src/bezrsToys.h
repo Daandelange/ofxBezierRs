@@ -22,7 +22,7 @@ class bezrsToy {
 
 class offsetToy : public bezrsToy {
 	public:
-	offsetToy() : bezrsToy("Offset Toy"){};
+	offsetToy() : bezrsToy("Offset"){};
 	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
 	void drawParams(const bezierShape& _sh) override;
 
@@ -32,7 +32,7 @@ class offsetToy : public bezrsToy {
 
 class rotationToy : public bezrsToy {
 	public:
-	rotationToy() : bezrsToy("Rotation Toy"){};
+	rotationToy() : bezrsToy("Rotation"){};
 	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
 	void drawParams(const bezierShape& _sh) override;
 
@@ -42,7 +42,7 @@ class rotationToy : public bezrsToy {
 
 class reverseWindingToy : public bezrsToy {
 	public:
-	reverseWindingToy() : bezrsToy("Reverse Winding Toy"){};
+	reverseWindingToy() : bezrsToy("Reverse Winding"){};
 	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
 	void drawParams(const bezierShape& _sh) override;
 };
