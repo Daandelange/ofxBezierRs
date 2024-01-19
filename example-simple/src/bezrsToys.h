@@ -22,12 +22,25 @@ class bezrsToy {
 
 class offsetToy : public bezrsToy {
 	public:
-	offsetToy() : bezrsToy("Offset"){};
+	offsetToy(std::string _name="Offset") : bezrsToy(_name){};
 	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
 	void drawParams(const bezierShape& _sh) override;
 
+	protected:
 	float offset = 0.f;
 	bezrsJoinType join = bezrsJoinType::Bevel;
+	void updateParams();
+	unsigned int lastTime = 0;
+};
+
+class outlineToy : public offsetToy {
+	public:
+	outlineToy() : offsetToy("Outline"){};
+	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
+	void drawParams(const bezierShape& _sh) override;
+
+	protected:
+	bezierShape outlineShapeBis;
 };
 
 class rotationToy : public bezrsToy {

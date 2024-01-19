@@ -43,6 +43,7 @@ inline void populateShapeFromBezRs(bezrsShape* bezRsShape, bezierShape& _outShap
     if(destroyShape) bezrs_shape_destroy(bezRsShape);
 }
 
+// Math helpers
 #include <cmath>
 float getModuloTime(float _interval = 1.f){
     return std::fmodf(ofGetElapsedTimef(), _interval)/_interval;
@@ -51,52 +52,22 @@ float getSineTime(float _interval = 1.f){
     return std::sin(ofGetElapsedTimef()*TWO_PI/_interval);
 }
 
+// Gui helpers
+std::string getBezrsJoinString(bezrsJoinType join){
+    std::string joinString("Join = ");
+    joinString += (join==bezrsJoinType::Bevel?"Bevel":(join==bezrsJoinType::Mitter?"Mitter":(join==bezrsJoinType::Round?"Round":"Other")));
+    if(join == bezrsJoinType::Round) joinString += " (unstable)";
+    return joinString;
+}
+
 
 //--------------------------------------------------------------
 void offsetToy::applyFX(const bezierShape& _inShape, bezierShape& _outShape) {
-//    // Make raw handle
-//    bezrsShapeRaw bezRsShapeInput = { _inShape.beziers.data(), _inShape.beziers.size(), true };
-//    // Build internal/opaque shape from raw input
-//    bezrsShape* bezRsShape = bezrs_shape_create( &bezRsShapeInput, true);
-//    // Transform the shape
-//    bezrs_cubic_bezier_offset(bezRsShape, 20, bezrsJoinType::Bevel, 0);
-//    // Retrieve resulting shape
-//    bezrsShapeRaw offsetShapeRaw = bezrs_shape_return_handle_data(bezRsShape);
-//    // Use result
-//    size_t bhi = 0;
-//    for (const bezrsBezierHandle* bh = offsetShapeRaw.data; bhi < offsetShapeRaw.len; bh++){
-//        // Populate shape
-//        _outShape.beziers.push_back(bezrsBezierHandle(*bh));
-//        bhi++;
-//    }
-//    // Destroy shape handle
-//    bezrs_shape_destroy(bezRsShape);
-
     // Create internal handle
     bezrsShape* bezRsShape = sendShapeToBezRs(_inShape);
 
     // Update vars
-    static const float cycle = 10.f;
-    offset = getSineTime(cycle)*30.f;
-
-    // Move joint type every cyle
-    static unsigned int lastTime = ofGetElapsedTimef()/cycle;
-    unsigned int now = ofGetElapsedTimef()/cycle;
-    if( now != lastTime){
-        lastTime = now;
-        switch (join) {
-            case bezrsJoinType::Bevel :
-                join = bezrsJoinType::Mitter;
-                break;
-            case bezrsJoinType::Mitter :
-                join = bezrsJoinType::Round;
-                break;
-            case bezrsJoinType::Round :
-            default:
-                join = bezrsJoinType::Bevel;
-                break;
-        }
-    }
+    updateParams();
 
     // Transform the shape
     bezrs_cubic_bezier_offset(bezRsShape, offset, join, 0);
@@ -113,10 +84,69 @@ void offsetToy::drawParams(const bezierShape& _sh){
     textPos.y -= 30;
     ofDrawBitmapStringHighlight(ofToString("Offset = ")+ofToString(offset), textPos.x, textPos.y);
     textPos.y -= 30;
-    std::string joinString("Join = ");
-    joinString += (join==bezrsJoinType::Bevel?"Bevel":(join==bezrsJoinType::Mitter?"Mitter":(join==bezrsJoinType::Round?"Round":"Other")));
-    if(join == bezrsJoinType::Round) joinString += " (unstable)";
-    ofDrawBitmapStringHighlight(joinString, textPos.x, textPos.y);
+    ofDrawBitmapStringHighlight(getBezrsJoinString(join), textPos.x, textPos.y);
+}
+
+void offsetToy::updateParams(){
+    static const float cycle = 10.f;
+    offset = getSineTime(cycle)*30.f;
+
+    // Move joint type every cyle
+    unsigned int now = ofGetElapsedTimef()/cycle;
+    if( now != lastTime){
+        lastTime = now;
+        switch (join) {
+            case bezrsJoinType::Bevel :
+                join = bezrsJoinType::Mitter;
+                break;
+            case bezrsJoinType::Mitter :
+                join = bezrsJoinType::Round;
+                break;
+            case bezrsJoinType::Round :
+            default:
+                join = bezrsJoinType::Bevel;
+                break;
+        }
+    }
+}
+
+//--------------------------------------------------------------
+void outlineToy::applyFX(const bezierShape& _inShape, bezierShape& _outShape) {
+    // Create internal handle
+    bezrsShape* bezRsShape = sendShapeToBezRs(_inShape);
+
+    // Update vars
+    updateParams();
+
+    // Transform the shape
+    bezrsShape* additionalOutlineShape = bezrs_shape_outline(bezRsShape, offset, join, bezrsCapType::Butt, 0);
+
+    // Retrieve and destroy internal handle
+    populateShapeFromBezRs(bezRsShape, _outShape, true);
+
+    // Reset additional shape
+    outlineShapeBis = {};
+
+    // Got additional shape ? (needs destruction too!)
+    if(additionalOutlineShape != nullptr){
+        // Store additional shape until next frame
+        populateShapeFromBezRs(additionalOutlineShape, outlineShapeBis, true);
+    }
+}
+
+void outlineToy::drawParams(const bezierShape& _sh){
+    glm::vec2 textPos = {50, ofGetHeight() - 50};
+    ofDrawBitmapStringHighlight("Creates an outline of a shape at a given distance.", textPos.x, textPos.y);
+    //textPos.y -= 30;
+    //ofDrawBitmapStringHighlight("Beware the winding order : CCW reverses the direction and creates some artifacts.", textPos.x, textPos.y);
+    textPos.y -= 30;
+    ofDrawBitmapStringHighlight(ofToString("Distance = ")+ofToString(offset), textPos.x, textPos.y);
+    textPos.y -= 30;
+    ofDrawBitmapStringHighlight(getBezrsJoinString(join), textPos.x, textPos.y);
+    //textPos.y -= 30;
+
+    // Draw 2nd offset
+    outlineShapeBis.draw(true, ofColor::red);
 }
 
 //--------------------------------------------------------------

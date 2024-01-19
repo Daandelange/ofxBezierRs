@@ -6,6 +6,7 @@ void ofApp::setup(){
     toys.push_back(new offsetToy());
     toys.push_back(new rotationToy());
     toys.push_back(new reverseWindingToy());
+    toys.push_back(new outlineToy());
 }
 
 //--------------------------------------------------------------
