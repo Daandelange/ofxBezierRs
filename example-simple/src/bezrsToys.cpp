@@ -76,10 +76,30 @@ void offsetToy::applyFX(const bezierShape& _inShape, bezierShape& _outShape) {
     bezrsShape* bezRsShape = sendShapeToBezRs(_inShape);
 
     // Update vars
-    offset = getSineTime(10.f)*30.f;
+    static const float cycle = 10.f;
+    offset = getSineTime(cycle)*30.f;
+
+    // Move joint type every cyle
+    static unsigned int lastTime = ofGetElapsedTimef()/cycle;
+    unsigned int now = ofGetElapsedTimef()/cycle;
+    if( now != lastTime){
+        lastTime = now;
+        switch (join) {
+            case bezrsJoinType::Bevel :
+                join = bezrsJoinType::Mitter;
+                break;
+            case bezrsJoinType::Mitter :
+                join = bezrsJoinType::Round;
+                break;
+            case bezrsJoinType::Round :
+            default:
+                join = bezrsJoinType::Bevel;
+                break;
+        }
+    }
 
     // Transform the shape
-    bezrs_cubic_bezier_offset(bezRsShape, offset, bezrsJoinType::Bevel, 0);
+    bezrs_cubic_bezier_offset(bezRsShape, offset, join, 0);
 
     // Retrieve and destroy internal handle
     populateShapeFromBezRs(bezRsShape, _outShape, true);
@@ -92,6 +112,11 @@ void offsetToy::drawParams(const bezierShape& _sh){
     ofDrawBitmapStringHighlight("Beware the winding order : CCW reverses the direction and creates some artifacts.", textPos.x, textPos.y);
     textPos.y -= 30;
     ofDrawBitmapStringHighlight(ofToString("Offset = ")+ofToString(offset), textPos.x, textPos.y);
+    textPos.y -= 30;
+    std::string joinString("Join = ");
+    joinString += (join==bezrsJoinType::Bevel?"Bevel":(join==bezrsJoinType::Mitter?"Mitter":(join==bezrsJoinType::Round?"Round":"Other")));
+    if(join == bezrsJoinType::Round) joinString += " (unstable)";
+    ofDrawBitmapStringHighlight(joinString, textPos.x, textPos.y);
 }
 
 //--------------------------------------------------------------

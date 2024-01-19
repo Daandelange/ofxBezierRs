@@ -27,6 +27,7 @@ class offsetToy : public bezrsToy {
 	void drawParams(const bezierShape& _sh) override;
 
 	float offset = 0.f;
+	bezrsJoinType join = bezrsJoinType::Bevel;
 };
 
 class rotationToy : public bezrsToy {
