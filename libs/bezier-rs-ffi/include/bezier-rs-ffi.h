@@ -53,6 +53,7 @@ struct bezrsBezierHandle {
 /// Raw vector handle representing a bezier shape
 /// Used for sending owned data from Rust to C++ in both directions.
 struct bezrsShapeRaw {
+  /// Ptr to std::vec<bezrsBezierHandle> (if c++ owned) or Vec<bezrsBezierHandle> (if rust owned)
   const bezrsBezierHandle *data;
   /// count of data items
   uintptr_t len;
@@ -60,10 +61,25 @@ struct bezrsShapeRaw {
   bool closed;
 };
 
+struct bezrsRect {
+  bezrsPos pos;
+  bezrsPos size;
+};
+
+/// Raw vector of floats
+/// Used for sending owned data from Rust to C++ in both directions.
+struct bezrsFloatsRaw {
+  /// Ptr to std::vec<float> (if c++ owned) or Vec<f64> (if rust owned)
+  const double *data;
+  /// count of data items
+  uintptr_t len;
+};
+
 extern "C" {
 
-/// Create a shape instance in rust memory : needs to be freed afterwards.
-bezrsShape *bezrs_shape_create(const bezrsShapeRaw *beziers_opt, bool closed);
+/// Create a shape instance in rust memory : needs to be freed afterwards. Also, `beziers_opt` needs to remain valid (and static) until freed.
+bezrsShape *bezrs_shape_create(const bezrsShapeRaw *beziers_opt,
+                               bool closed);
 
 /// To destroy an internal shape handle when you don't need it anymore.
 void bezrs_shape_destroy(bezrsShape *_bezier);
@@ -96,5 +112,22 @@ bezrsShape *bezrs_shape_outline(bezrsShape *_shape,
                                 bezrsJoinType join,
                                 bezrsCapType cap,
                                 double miter_limit);
+
+/// Returns the bounding box of the shape
+bezrsRect bezrs_shape_boundingbox(bezrsShape *_shape);
+
+/// Returns the inflection points on a shape
+bezrsFloatsRaw bezrs_shape_inflections(bezrsShape *_shape);
+
+/// Returns if a point is contained within a shape
+bool bezrs_shape_containspoint(bezrsShape *_shape, bezrsPos _pos);
+
+/// Returns positions where the shape self intersects
+bezrsFloatsRaw bezrs_shape_selfintersections(bezrsShape *_shape,
+                                             double _errorTreshold,
+                                             double _minDist);
+
+/// Returns the position on the shape from a t-value (0->1) using `evaluate()`.
+bezrsPos bezrs_shape_posfromtvalue(bezrsShape *_shape, double _t);
 
 } // extern "C"

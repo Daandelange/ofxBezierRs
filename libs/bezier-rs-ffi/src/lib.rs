@@ -22,6 +22,9 @@
 // - Bezier = Segment of a Shape (used internally).
 
 use std::slice;
+use std::ptr;
+use bezier_rs::SubpathTValue; // Warns unused, but doesn't compile without this import !
+use bezier_rs::TValue;
 
 // For accessing/sharing c++ std::vectors
 use bezier_rs::{Subpath, ManipulatorGroup};
@@ -141,6 +144,13 @@ pub struct bezrsBezierHandle {
     pub out_bez : bezrsPos,
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bezrsRect {
+    pub pos : bezrsPos,
+    pub size : bezrsPos,
+}
+
 impl bezrsBezierHandle {
 
 	pub fn new(x: f64, y: f64, inx : f64, iny : f64, outx : f64, outy : f64) -> Self {
@@ -213,7 +223,7 @@ pub(crate) fn sub_path_to_vec(sub_path : &Subpath<EmptyId>) -> Vec<bezrsBezierHa
 /// Used for sending owned data from Rust to C++ in both directions.
 #[repr(C)]
 pub struct bezrsShapeRaw {
-	// Ptr to std::vec<bezrsBezierHandle> (if c++ owned) or Vec<bezrsBezierHandle> (if rust owned)
+	/// Ptr to std::vec<bezrsBezierHandle> (if c++ owned) or Vec<bezrsBezierHandle> (if rust owned)
     data: *const bezrsBezierHandle,
     /// count of data items
     len: usize,
@@ -221,10 +231,21 @@ pub struct bezrsShapeRaw {
     closed: bool,
 }
 
+/// Raw vector of floats
+/// Used for sending owned data from Rust to C++ in both directions.
+#[repr(C)]
+pub struct bezrsFloatsRaw {
+	/// Ptr to std::vec<float> (if c++ owned) or Vec<f64> (if rust owned)
+    data: *const f64,
+    /// count of data items
+    len: usize,
+}
+
 // C++ : Opaque pointer to internal data handle
 // Rust : Internal data object holding the subpath
 /// Opaque internal shape data handle
 /// (use only as pointer! allocated on rust side, needs to be freed properly)
+// Todo: rename this bezrsShapeInternal for c++ clarity ??
 #[derive(Debug)]
 pub struct bezrsShape {
 	pub(crate) sub_path : Subpath<EmptyId>, // Internal data object
@@ -361,6 +382,7 @@ pub extern "C" fn bezrs_shape_return_handle_data(_shape: *mut bezrsShape) -> bez
 // Returning a vec to c++ : https://www.reddit.com/r/rust/comments/aca3do/ffi_how_do_you_pass_a_vec_to_c/
 #[no_mangle]
 /// Offset a shape. When the shape is winded clockwise : positive offset goes inside, negative is outside.
+// Todo : Rename this to bezrs_shape_offset
 pub extern "C" fn bezrs_cubic_bezier_offset(_shape: *mut bezrsShape, offset : f64, join_type : bezrsJoinType, join_mitter : f64 ) {
 	let shape = unsafe {
         assert!(!_shape.is_null());
@@ -405,7 +427,7 @@ pub extern "C" fn bezrs_shape_outline(_shape: *mut bezrsShape, distance: f64, jo
 	// Return 2nd result as a shape
 	if shape.sub_path.closed() {
 		if let Some(outline) = outline_piece2 {
-			// Return empty path/shape
+			// Allocate return path/shape
 			let boxed_shape = Box::new(bezrsShape::new(outline));
 
 			// Return raw pointer to the allocated memory
@@ -414,4 +436,81 @@ pub extern "C" fn bezrs_shape_outline(_shape: *mut bezrsShape, distance: f64, jo
 	}
 
 	return std::ptr::null_mut();
+}
+
+#[no_mangle]
+/// Returns the bounding box of the shape
+pub extern "C" fn bezrs_shape_boundingbox(_shape: *mut bezrsShape) -> bezrsRect {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+    if let Some(bb) = shape.sub_path.bounding_box() {
+		let _size = bb[1]-bb[0];
+		let ret = bezrsRect { pos: bezrsPos::from_dvec2(&bb[0]), size: bezrsPos::from_dvec2(&_size)};
+		return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+	}
+
+	return bezrsRect {pos:bezrsPos::new(0.,0.), size: bezrsPos::new(0.,0.)};
+}
+
+#[no_mangle]
+/// Returns the inflection points on a shape
+pub extern "C" fn bezrs_shape_inflections(_shape: *mut bezrsShape) -> bezrsFloatsRaw {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+    let inflections = shape.sub_path.inflections();
+	if inflections.len() > 0 {
+		let ret = bezrsFloatsRaw { data: inflections.as_ptr(), len: inflections.len() };
+		return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+	}
+
+	return bezrsFloatsRaw {data: ptr::null(), len: 0};
+}
+
+#[no_mangle]
+/// Returns if a point is contained within a shape
+pub extern "C" fn bezrs_shape_containspoint(_shape: *mut bezrsShape, _pos : bezrsPos) -> bool {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+    let contained = shape.sub_path.contains_point(_pos.to_dvec2());
+	return contained; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+}
+
+#[no_mangle]
+/// Returns positions where the shape self intersects
+pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _errorTreshold : f64, _minDist : f64) -> bezrsFloatsRaw {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	let si = shape.sub_path.self_intersections(None, None);
+	if si.len() > 0 {
+		let flattened : Vec<f64> = si.iter().map(|(x,f)| *f).collect();
+		let ret = bezrsFloatsRaw { data: flattened.as_ptr(), len: flattened.len() };
+		return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+	}
+
+	return bezrsFloatsRaw {data: ptr::null(), len: 0};
+}
+
+#[no_mangle]
+/// Returns the position on the shape from a t-value (0->1) using `evaluate()`.
+pub extern "C" fn bezrs_shape_posfromtvalue(_shape: *mut bezrsShape, _t : f64) -> bezrsPos {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	//let pos = shape.sub_path.evaluate( SubpathTValue::Parametric(_t) );
+	let pos = shape.sub_path.evaluate( TValue::Parametric(_t) );
+	return bezrsPos::from_dvec2(&pos);
 }
