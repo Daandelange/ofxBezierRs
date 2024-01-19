@@ -7,10 +7,15 @@ Right now, consider this addon as a proof-of-concept for using libBezierRs with 
 Tested on `osx 10.12 + OF 0.11.2` and `linux + OF 0.11.2`, the binaries are not yet bundled.
 
 Functions :
-- [x] Shape offset 
+- [x] Shape offset
 - [x] Shape outline
 - [x] Shape rotation
 - [x] Reversing winding direction
+- [x] Computing the bounding box of a shape
+- [] Shape hit testing
+- [] Inflections
+- [] Find shape self intersections
+- [] Evaluate a point on the shape (t-value)
 
 ## Shapes
 The shape object is close to the underlying one used in bezier-rs.  

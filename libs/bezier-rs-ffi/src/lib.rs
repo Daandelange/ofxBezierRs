@@ -24,7 +24,7 @@
 use std::slice;
 use std::ptr;
 use bezier_rs::SubpathTValue; // Warns unused, but doesn't compile without this import !
-use bezier_rs::TValue;
+//use bezier_rs::TValue;
 
 // For accessing/sharing c++ std::vectors
 use bezier_rs::{Subpath, ManipulatorGroup};
@@ -486,7 +486,7 @@ pub extern "C" fn bezrs_shape_containspoint(_shape: *mut bezrsShape, _pos : bezr
 
 #[no_mangle]
 /// Returns positions where the shape self intersects
-pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _errorTreshold : f64, _minDist : f64) -> bezrsFloatsRaw {
+pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _error_treshold : f64, _min_dist : f64) -> bezrsFloatsRaw {
 	let shape = unsafe {
         assert!(!_shape.is_null());
         &mut *_shape
@@ -494,7 +494,7 @@ pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _errorT
 
 	let si = shape.sub_path.self_intersections(None, None);
 	if si.len() > 0 {
-		let flattened : Vec<f64> = si.iter().map(|(x,f)| *f).collect();
+		let flattened : Vec<f64> = si.iter().map(|(_x,f)| *f).collect();
 		let ret = bezrsFloatsRaw { data: flattened.as_ptr(), len: flattened.len() };
 		return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
 	}
@@ -510,7 +510,7 @@ pub extern "C" fn bezrs_shape_posfromtvalue(_shape: *mut bezrsShape, _t : f64) -
         &mut *_shape
     };
 
-	//let pos = shape.sub_path.evaluate( SubpathTValue::Parametric(_t) );
-	let pos = shape.sub_path.evaluate( TValue::Parametric(_t) );
+	let pos = shape.sub_path.evaluate( SubpathTValue::GlobalParametric(_t) );
+	// let pos = shape.sub_path.evaluate( TValue::Parametric(_t) );
 	return bezrsPos::from_dvec2(&pos);
 }
