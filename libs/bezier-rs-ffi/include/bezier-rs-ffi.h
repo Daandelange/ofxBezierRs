@@ -124,8 +124,8 @@ bool bezrs_shape_containspoint(bezrsShape *_shape, bezrsPos _pos);
 
 /// Returns positions where the shape self intersects
 bezrsFloatsRaw bezrs_shape_selfintersections(bezrsShape *_shape,
-                                             double _errorTreshold,
-                                             double _minDist);
+                                             double _error_treshold,
+                                             double _min_dist);
 
 /// Returns the position on the shape from a t-value (0->1) using `evaluate()`.
 bezrsPos bezrs_shape_posfromtvalue(bezrsShape *_shape, double _t);
