@@ -59,3 +59,10 @@ class reverseWindingToy : public bezrsToy {
 	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
 	void drawParams(const bezierShape& _sh) override;
 };
+
+class boundingBoxToy : public bezrsToy {
+	public:
+	boundingBoxToy() : bezrsToy("Bounding Box"){};
+	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
+	void drawParams(const bezierShape& _sh) override;
+};

@@ -201,3 +201,30 @@ void reverseWindingToy::drawParams(const bezierShape& _sh){
     ofDrawBitmapStringHighlight("Reverses the shape winding.", textPos.x, textPos.y);
     textPos.y -= 30;
 }
+
+//--------------------------------------------------------------
+void boundingBoxToy::applyFX(const bezierShape& _inShape, bezierShape& _outShape) {
+    // Create internal handle
+    bezrsShape* bezRsShape = sendShapeToBezRs(_inShape);
+
+    // Transform the shape
+    bezrs_shape_reverse_winding(bezRsShape);
+
+    // Retrieve and destroy internal handle
+    //populateShapeFromBezRs(bezRsShape, _outShape, true);
+    bezrsRect bb = bezrs_shape_boundingbox(bezRsShape);
+
+    // Place rect in shape
+    _outShape.beziers = bezrs_beziers_from_rect(bb);
+    _outShape.bChanged = true;
+
+    // Destroy manually
+    bezrs_shape_destroy(bezRsShape);
+
+}
+
+void boundingBoxToy::drawParams(const bezierShape& _sh){
+    glm::vec2 textPos = {50, ofGetHeight() - 50};
+    ofDrawBitmapStringHighlight("Calculates the bounding box that contains the shape.", textPos.x, textPos.y);
+    textPos.y -= 30;
+}
