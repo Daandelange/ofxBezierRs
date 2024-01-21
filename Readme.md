@@ -12,10 +12,14 @@ Functions :
 - [x] Shape rotation
 - [x] Reversing winding direction
 - [x] Computing the bounding box of a shape
-- [] Shape hit testing
+- [x] Shape hit testing
 - [] Inflections
 - [] Find shape self intersections
-- [] Evaluate a point on the shape (t-value)
+- [x] Evaluate a point on the shape (t-value)
+- [x] Normal from t-value
+- [x] Tangent from t-value
+- [x] Curvature from t-value
+- [x] Find closest point on shape
 
 ## Shapes
 The shape object is close to the underlying one used in bezier-rs.  

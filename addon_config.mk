@@ -6,12 +6,13 @@ meta:
 	ADDON_URL = https://github.com/daandelange/ofxBezierRs
 
 common:
-	ADDON_INCLUDES = src/ 
+	ADDON_INCLUDES = src/
 	ADDON_INCLUDES += libs/bezier-rs-ffi/include
 	ADDON_LDFLAGS = -lpthread -ldl
 
 osx:
 	ADDON_LIBS = libs/bezier-rs-ffi/lib/osx/libbezier_rs_ffi.dylib
+	#ADDON_LIBS = libs/bezier-rs-ffi/lib/osx/libbezier_rs_ffi.a
 
 linux64:
 	#ADDON_LDFLAGS = -lbezier_rs_ffi
@@ -23,4 +24,3 @@ linuxarmv7l:
 
 vs:
 	#ADDON_LIBS = libs/bezier-rs-ffi/lib/xxxx/libbezier_rs_ffi.dll
-

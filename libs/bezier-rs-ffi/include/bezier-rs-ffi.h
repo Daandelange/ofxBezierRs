@@ -130,4 +130,20 @@ bezrsFloatsRaw bezrs_shape_selfintersections(bezrsShape *_shape,
 /// Returns the position on the shape from a t-value (0->1) using `evaluate()`.
 bezrsPos bezrs_shape_posfromtvalue(bezrsShape *_shape, double _t);
 
+/// Returns the position on the shape from a t-value (0->1) using `evaluate()`.
+bezrsPos bezrs_shape_posfromtvalue_subpath(bezrsShape *_shape, uintptr_t _i, double _t);
+
+/// Returns the normal on the shape from a t-value (0->1).
+bezrsPos bezrs_shape_normalfromtvalue(bezrsShape *_shape, double _t);
+
+/// Returns the tangent on the shape from a t-value (0->1).
+bezrsPos bezrs_shape_tangentfromtvalue(bezrsShape *_shape, double _t);
+
+/// Returns the curvature on the shape from a t-value (0->1).
+double bezrs_shape_curvaturefromtvalue(bezrsShape *_shape, double _t);
+
+/// Returns t-value of the projection of a position on the shape from a t-value (0->1). (finds closest point on shape)
+bezrsPos bezrs_shape_project_pos(bezrsShape *_shape,
+                                 bezrsPos _pos);
+
 } // extern "C"

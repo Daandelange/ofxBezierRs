@@ -514,3 +514,68 @@ pub extern "C" fn bezrs_shape_posfromtvalue(_shape: *mut bezrsShape, _t : f64) -
 	// let pos = shape.sub_path.evaluate( TValue::Parametric(_t) );
 	return bezrsPos::from_dvec2(&pos);
 }
+
+#[no_mangle]
+/// Returns the position on the shape from a t-value (0->1) using `evaluate()`.
+pub extern "C" fn bezrs_shape_posfromtvalue_subpath(_shape: *mut bezrsShape, _i : usize, _t : f64) -> bezrsPos {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	let pos = shape.sub_path.evaluate( SubpathTValue::Parametric{ segment_index: _i, t:_t} );
+	// let pos = shape.sub_path.evaluate( TValue::Parametric(_t) );
+	return bezrsPos::from_dvec2(&pos);
+}
+
+#[no_mangle]
+/// Returns the normal on the shape from a t-value (0->1).
+pub extern "C" fn bezrs_shape_normalfromtvalue(_shape: *mut bezrsShape, _t : f64) -> bezrsPos {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	let normal = shape.sub_path.normal( SubpathTValue::GlobalParametric(_t) );
+	return bezrsPos::from_dvec2(&normal);
+}
+
+#[no_mangle]
+/// Returns the tangent on the shape from a t-value (0->1).
+pub extern "C" fn bezrs_shape_tangentfromtvalue(_shape: *mut bezrsShape, _t : f64) -> bezrsPos {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	let tangent = shape.sub_path.tangent( SubpathTValue::GlobalParametric(_t) );
+	return bezrsPos::from_dvec2(&tangent);
+}
+
+#[no_mangle]
+/// Returns the curvature on the shape from a t-value (0->1).
+pub extern "C" fn bezrs_shape_curvaturefromtvalue(_shape: *mut bezrsShape, _t : f64) -> f64 {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	let curvature = shape.sub_path.curvature( SubpathTValue::GlobalParametric(_t) );
+	return curvature;
+}
+
+#[no_mangle]
+/// Returns t-value of the projection of a position on the shape from a t-value (0->1). (finds closest point on shape)
+pub extern "C" fn bezrs_shape_project_pos(_shape: *mut bezrsShape, _pos : bezrsPos) -> bezrsPos {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+	if let Some((_path_index, t_value)) = shape.sub_path.project( _pos.to_dvec2(), None ) {
+		return bezrsPos::from_dvec2(&shape.sub_path.evaluate(SubpathTValue::Parametric { segment_index: _path_index, t: t_value }));
+	}
+
+	return bezrsPos {x:0., y:0.}; // Todo : set this to infinity or something to mark the fail
+}
+
