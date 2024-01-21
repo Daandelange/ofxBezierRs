@@ -11,6 +11,9 @@ void ofApp::setup(){
     toys.push_back(new hitTestToy());
     toys.push_back(new evaluateToy());
     toys.push_back(new selfIntersectToy());
+
+    // Generate an initial drawing
+    generateNewShape();
 }
 
 //--------------------------------------------------------------
@@ -51,6 +54,8 @@ void ofApp::draw(){
         ofDrawBitmapStringHighlight("Gui Toggles: H=Help, I=Info", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
         textY+=30;
         ofDrawBitmapStringHighlight("Render Toggles: A=Animate, n=Numbers", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
+        textY+=30;
+        ofDrawBitmapStringHighlight("Use arrows to change toy. (--> <--)", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
         textY+=30;
     }
 
@@ -109,11 +114,17 @@ void ofApp::draw(){
             int textX = 50;
             static const int fontSize = 8; // from ofDrawBitmapStringHighlight SRC
             static const int padding = 10;
+            static const int toyOffset = fontSize * 7 + padding; // 7 = strlen(string_below)
             ofDrawBitmapStringHighlight(ofToString("Toys : "), textX, textY, ofColor(ofColor::black, 100));
-            textX += fontSize * 7 + padding;
+            textX += toyOffset;
             for(auto* t : toys){
+                int textWidth = fontSize * ofToString(t->name_cstr()).length() + padding;
+                if(textX+textWidth > 600){ // Start new line ?
+                    textX = 50 + toyOffset;
+                    textY+= 20 + padding*.5;
+                }
                 ofDrawBitmapStringHighlight(t->name_cstr(), textX, textY, ofColor(ofColor::black, t==toy?255:100));
-                textX += fontSize * ofToString(t->name_cstr()).length() + padding;
+                textX += textWidth;
             }
             textY+=30;
             toy->drawParams(fxShape);
@@ -153,6 +164,9 @@ void ofApp::keyReleased(int key){
     else if(key=='n' || key=='N'){
         // Toggle help
         bezierShape::bShowNumbers = !bezierShape::bShowNumbers;
+    }
+    else if(key==OF_KEY_PAGE_DOWN){
+        generateNewShape();
     }
 
     // Handle toy slider
@@ -236,3 +250,35 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
 }
+
+//--------------------------------------------------------------
+void ofApp::generateNewShape(){
+    // Generate a drawing
+    shape.beziers = {};
+    glm::vec2 center = {ofGetWidth()*.5, ofGetHeight()*.5};
+    const float numPts = 10., radius = 160., variance = 8.f, bezierSize=35, bezierVariance=0.3*TWO_PI;
+    for(unsigned int i=0; i<numPts; i++){
+        bool pair = i%2;
+        float angle = i/numPts*TWO_PI;
+        glm::vec2 ptCenter = center + glm::vec2(cos(angle)*radius*(.5+.5*pair), sin(angle)*radius*(.5+.5*pair));
+        ptCenter += glm::vec2(ofRandom(0.f,variance), ofRandom(0.f,variance));
+        unsigned int rand = roundf(ofRandom(-.5,2.4));
+        glm::vec2 bhInOffset = {0,0}, bhOutOffset = {0,0};
+        glm::vec2 tan = glm::rotate(glm::vec2(cos(angle), sin(angle)), glm::pi<float>() * -0.5f +ofRandom(-bezierVariance,bezierVariance));
+        if(rand == 1 || rand == 2){ // Opposite
+            bhInOffset = tan * ofRandom(bezierSize-variance,bezierSize+variance);
+            bhOutOffset = bhInOffset*glm::vec2(-1,-1);
+
+            if(rand ==2)
+                bhOutOffset =  ofRandom(bezierSize-variance,bezierSize+variance) * glm::rotate(glm::vec2(cos(angle), sin(angle)), glm::pi<float>() * +0.5f +ofRandom(-bezierVariance,bezierVariance));
+        }
+        bezrsBezierHandle bh = {
+            {ptCenter.x, ptCenter.y},
+            {ptCenter.x+bhInOffset.x, ptCenter.y+bhInOffset.y},
+            {ptCenter.x+bhOutOffset.x, ptCenter.y+bhOutOffset.y}
+        };
+        shape.beziers.push_back(bh);
+    }
+    shape.bChanged = true;
+}
+
