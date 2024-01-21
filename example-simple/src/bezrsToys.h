@@ -65,4 +65,50 @@ class boundingBoxToy : public bezrsToy {
 	boundingBoxToy() : bezrsToy("Bounding Box"){};
 	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
 	void drawParams(const bezierShape& _sh) override;
+
+	protected:
+	bezrsRect bb;
 };
+
+class hitTestToy : public bezrsToy {
+	public:
+	hitTestToy() : bezrsToy("Hit test"){};
+	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
+	void drawParams(const bezierShape& _sh) override;
+
+	protected:
+	glm::vec2 simPos = {0,0};
+	const float simSpeed = 3;
+	glm::vec2 simVec = {simSpeed,simSpeed};
+	glm::vec2 mousePos = {0,0};
+	bool simPosHit = false;
+	bool mousePosHit = false;
+	glm::vec2 mouseProjection, simProjection;
+};
+
+class evaluateToy : public bezrsToy {
+	public:
+	evaluateToy() : bezrsToy("Evaluate TValue"){};
+	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
+	void drawParams(const bezierShape& _sh) override;
+
+	protected:
+	double tval = 0.;
+	bezrsPos tPos;
+	bezrsPos tTangent;
+	bezrsPos tNormal;
+	float tCurvature;
+};
+
+class selfIntersectToy : public offsetToy {
+	public:
+	selfIntersectToy() : offsetToy("Offset Self Intersect"){};
+	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
+	void drawParams(const bezierShape& _sh) override;
+
+	protected:
+	std::vector<bezrsPos> selfIntersects;
+	std::vector<double> floatsVec;
+};
+
+// Todo : Global vs Euclidean tvalues

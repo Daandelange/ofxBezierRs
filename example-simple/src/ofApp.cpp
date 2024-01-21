@@ -8,6 +8,9 @@ void ofApp::setup(){
     toys.push_back(new reverseWindingToy());
     toys.push_back(new outlineToy());
     toys.push_back(new boundingBoxToy());
+    toys.push_back(new hitTestToy());
+    toys.push_back(new evaluateToy());
+    toys.push_back(new selfIntersectToy());
 }
 
 //--------------------------------------------------------------
