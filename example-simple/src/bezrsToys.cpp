@@ -48,9 +48,10 @@ inline void populateShapeFromBezRs(bezrsShape* bezRsShape, bezierShape& _outShap
 // Retrieves bezrs float data to oF (c++)
 inline std::vector<double> floatsRawToVec(bezrsFloatsRaw& _floatsRaw){
     // Copy result
-    std::vector<double> ret(_floatsRaw.len);
+    std::vector<double> ret(0);//_floatsRaw.len);
     size_t bhi = 0;
     for (const double* fr = _floatsRaw.data; bhi < _floatsRaw.len; fr++){
+        if(!fr) continue;
         // Populate shape
         ret.push_back(*fr); // Todo: potentially unsafe ? Check pointer ?
         bhi++;
@@ -419,7 +420,7 @@ void selfIntersectToy::applyFX(const bezierShape& _inShape, bezierShape& _outSha
     offset = 30;
     join = bezrsJoinType::Bevel;
     static const float cycle = 10.f;
-    //offset = getSineTime(cycle)*40.f; // to animate
+    offset = getSineTime(cycle)*40.f; // to animate
 
     // Transform the shape
     bezrs_cubic_bezier_offset(bezRsShape, offset, join, 0);
@@ -429,15 +430,12 @@ void selfIntersectToy::applyFX(const bezierShape& _inShape, bezierShape& _outSha
 
     // Find intersections !
     bezrsFloatsRaw intersectionTValues = bezrs_shape_selfintersections(bezRsShape, 0.001, 0.001);
-//    std::vector<double> floatsVec = floatsRawToVec(intersectionTValues);
     floatsVec = floatsRawToVec(intersectionTValues);
 
     // Convert t-values to coordinates
-//    selfIntersects.clear();
-    selfIntersects = {};
-    //std::cout << "TValueSize=" << floatsVec.size() << std::endl;
+    selfIntersects.clear();
     for(double& tvalue : floatsVec){
-        //if(tvalue>1 || tvalue < 0) std::cout << "TVALUE=" << tvalue << "\t / " << std::fmod(tvalue, 1.) << std::endl;;
+        if(tvalue > 1 || tvalue < 0) continue;//std::cout << "TVALUE=" << tvalue << "\t / " << std::fmod(tvalue, 1.) << std::endl;;
         bezrsPos p = bezrs_shape_posfromtvalue(bezRsShape, std::fmod(std::abs(tvalue), 1.));
         //std::cout << "TValue=" << tvalue << "\t = " << p << std::endl;
         selfIntersects.push_back(p);
@@ -463,7 +461,7 @@ void selfIntersectToy::drawParams(const bezierShape& _sh){
     // Draw self intersects
     ofSetColor(ofColor::purple);
     for(bezrsPos& p : selfIntersects){
-        ofDrawCircle(p.x, p.y, 3);
+        ofDrawCircle(p.x, p.y, 5);
     }
     ofSetColor(ofColor::cyan);
     const glm::vec2 size = {ofGetHeight()*.5, 10};

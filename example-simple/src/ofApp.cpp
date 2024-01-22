@@ -20,7 +20,6 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
     // Update
-    //if(shape.bChanged){
     bool invertAction = ofGetKeyPressed(OF_KEY_RETURN);
     if(
         (bAnimate != invertAction ) || // Force change ?
@@ -257,7 +256,7 @@ void ofApp::generateNewShape(){
     // Generate a drawing
     shape.beziers = {};
     glm::vec2 center = {ofGetWidth()*.5, ofGetHeight()*.5};
-    const float numPts = 10., radius = 160., variance = 8.f, bezierSize=35, bezierVariance=0.3*TWO_PI;
+    const float numPts = 10., radius = 160., variance = 8.f, bezierSize=35, bezierVariance=0.1*TWO_PI;
     for(unsigned int i=0; i<numPts; i++){
         bool pair = i%2;
         float angle = i/numPts*TWO_PI;
