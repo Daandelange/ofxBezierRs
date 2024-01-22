@@ -1,5 +1,6 @@
 # ofxBezierRs
 An OpenFrameworks wrapper for [bezier-rs](https://github.com/GraphiteEditor/Graphite/tree/master/libraries/bezier-rs) providing a set geometrical functions on cartesian planar Beziér paths or shapes.
+In terms of algorithm, the Bezier-rs is quite close to `bezier.js` from [Pomax's research work](https://pomax.github.io/bezierinfo/).
 
 ## Early state
 Bezier-rs provides [plenty of functions](https://graphite.rs/libraries/bezier-rs/), not all are implemented yet.  

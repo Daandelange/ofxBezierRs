@@ -50,13 +50,15 @@ struct bezrsBezierHandle {
   }
 };
 
+using SizeTC = unsigned long;
+
 /// Raw vector handle representing a bezier shape
 /// Used for sending owned data from Rust to C++ in both directions.
 struct bezrsShapeRaw {
   /// Ptr to std::vec<bezrsBezierHandle> (if c++ owned) or Vec<bezrsBezierHandle> (if rust owned)
   const bezrsBezierHandle *data;
   /// count of data items
-  uintptr_t len;
+  SizeTC len;
   /// if true, behave as shape, otherwise behave as path.
   bool closed;
 };
@@ -72,7 +74,7 @@ struct bezrsFloatsRaw {
   /// Ptr to std::vec<float> (if c++ owned) or Vec<f64> (if rust owned)
   const double *data;
   /// count of data items
-  uintptr_t len;
+  SizeTC len;
 };
 
 extern "C" {
@@ -85,10 +87,16 @@ bezrsShape *bezrs_shape_create(const bezrsShapeRaw *beziers_opt,
 void bezrs_shape_destroy(bezrsShape *_bezier);
 
 /// Inserts a bezier to the shape at a given position
-void bezrs_shape_insert_bezier(bezrsShape *_shape, bezrsBezierHandle _bez, uintptr_t _pos);
+void bezrs_shape_insert_bezier(bezrsShape *_shape, bezrsBezierHandle _bez, SizeTC _pos);
 
 /// Appends a bezier to the shape
 void bezrs_shape_append_bezier(bezrsShape *_shape, bezrsBezierHandle _bez);
+
+/// Appends a bezier to the shape
+SizeTC bezrs_shape_info_size(bezrsShape *_shape);
+
+/// Appends a bezier to the shape
+SizeTC bezrs_shape_info_segments(bezrsShape *_shape);
 
 /// Reverses the winding order of bezier handles
 void bezrs_shape_reverse_winding(bezrsShape *_shape);
@@ -118,6 +126,9 @@ bezrsRect bezrs_shape_boundingbox(bezrsShape *_shape);
 
 /// Returns the inflection points on a shape
 bezrsFloatsRaw bezrs_shape_inflections(bezrsShape *_shape);
+
+/// Returns the local extrema points on a shape on multiple axis
+bezrsFloatsRaw bezrs_shape_localextrema(bezrsShape *_shape);
 
 /// Returns if a point is contained within a shape
 bool bezrs_shape_containspoint(bezrsShape *_shape, bezrsPos _pos);

@@ -23,6 +23,7 @@
 
 use std::slice;
 use std::ptr;
+use std::ffi::c_ulong;
 use bezier_rs::SubpathTValue; // Warns unused, but doesn't compile without this import !
 //use bezier_rs::TValue;
 
@@ -32,6 +33,12 @@ use bezier_rs::{Cap, Join};
 
 // Included for conversions
 use glam::f64::DVec2; // point class, already defined repr(C)
+
+// Typedef : C -> std::size_t, Rust -> usize
+// Binding might be defined depending on target platform ?
+// usize becomes uintptr_t while std:size_t is u64 on osx-64 and linux-64
+// See: https://locka99.gitbooks.io/a-guide-to-porting-c-to-rust/content/features_of_rust/types.html
+type SizeTC = c_ulong;//usize;//u64; // A type compatible with `std::size_t`, the `usize` alternative doesn't work...
 
 /// Join type enum
 #[repr(C)]
@@ -226,7 +233,7 @@ pub struct bezrsShapeRaw {
 	/// Ptr to std::vec<bezrsBezierHandle> (if c++ owned) or Vec<bezrsBezierHandle> (if rust owned)
     data: *const bezrsBezierHandle,
     /// count of data items
-    len: usize,
+    len: SizeTC, // usize becomes uint_ptr_t in clibgen ....
     /// if true, behave as shape, otherwise behave as path.
     closed: bool,
 }
@@ -238,7 +245,7 @@ pub struct bezrsFloatsRaw {
 	/// Ptr to std::vec<float> (if c++ owned) or Vec<f64> (if rust owned)
     data: *const f64,
     /// count of data items
-    len: usize,
+    len: SizeTC,
 }
 
 // C++ : Opaque pointer to internal data handle
@@ -262,6 +269,11 @@ impl bezrsShape {
 	}
 }
 
+// Some unsafe mutable STATICS !
+// Used for ensuring memory stays alive until API calls
+// Prevents using Box() and UnBox() meccanisms like for the shape handle, which are the alternative
+static mut LAST_VEC_RAW : Vec<f64> = vec![];
+
 #[no_mangle]
 // note : Option is for allowing nullptr from c++
 /// Create a shape instance in rust memory : needs to be freed afterwards. Also, `beziers_opt` needs to remain valid (and static) until freed.
@@ -271,7 +283,7 @@ pub extern "C" fn bezrs_shape_create(beziers_opt: Option<&bezrsShapeRaw>, closed
         if !beziers_raw.data.is_null() {
             // Convert the raw pointer and length to a slice
             let beziers_slice = unsafe {
-                slice::from_raw_parts(beziers_raw.data as *const bezrsBezierHandle, beziers_raw.len)
+                slice::from_raw_parts(beziers_raw.data as *const bezrsBezierHandle, beziers_raw.len as usize)
             };
 
             // Convert `Vec<bezrsBezierHandle>` to `Vec<ManipulatorGroup<EmptyId>>`
@@ -327,12 +339,12 @@ pub extern "C" fn bezrs_shape_destroy(_bezier: *mut bezrsShape) {
 
 #[no_mangle]
 /// Inserts a bezier to the shape at a given position
-pub extern "C" fn bezrs_shape_insert_bezier(_shape: *mut bezrsShape, _bez : bezrsBezierHandle, _pos : usize) {
+pub extern "C" fn bezrs_shape_insert_bezier(_shape: *mut bezrsShape, _bez : bezrsBezierHandle, _pos : SizeTC) {
     let shape = unsafe {
         assert!(!_shape.is_null());
         &mut *_shape
     };
-    shape.sub_path.insert_manipulator_group(_pos, _bez.to_internal());
+    shape.sub_path.insert_manipulator_group(_pos as usize, _bez.to_internal());
 }
 
 #[no_mangle]
@@ -344,6 +356,27 @@ pub extern "C" fn bezrs_shape_append_bezier(_shape: *mut bezrsShape, _bez : bezr
     };
     let pos = shape.sub_path.len();
     shape.sub_path.insert_manipulator_group(pos, _bez.to_internal());
+}
+
+
+#[no_mangle]
+/// Appends a bezier to the shape
+pub extern "C" fn bezrs_shape_info_size(_shape: *mut bezrsShape) -> SizeTC {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+    return shape.sub_path.len() as SizeTC;
+}
+
+#[no_mangle]
+/// Appends a bezier to the shape
+pub extern "C" fn bezrs_shape_info_segments(_shape: *mut bezrsShape) -> SizeTC {
+    let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+    return shape.sub_path.len_segments() as SizeTC;
 }
 
 #[no_mangle]
@@ -372,7 +405,7 @@ pub extern "C" fn bezrs_shape_return_handle_data(_shape: *mut bezrsShape) -> bez
     	// data: shape.sub_path.manipulator_groups().as_mut_ptr(),
     	// len: shape.sub_path.manipulator_groups().len(),
     	data: shape.beziers.as_mut_ptr(),
-    	len: shape.beziers.len(),
+    	len: shape.beziers.len() as SizeTC,
     	closed: shape.sub_path.closed(),
     };
 }
@@ -463,10 +496,40 @@ pub extern "C" fn bezrs_shape_inflections(_shape: *mut bezrsShape) -> bezrsFloat
         &mut *_shape
     };
 
-    let inflections = shape.sub_path.inflections();
-	if inflections.len() > 0 {
-		let ret = bezrsFloatsRaw { data: inflections.as_ptr(), len: inflections.len() };
-		return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+	unsafe {
+		LAST_VEC_RAW = shape.sub_path.inflections().clone();
+		if LAST_VEC_RAW.len() > 0 {
+			let ret = bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
+			return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+		}
+	}
+
+	return bezrsFloatsRaw {data: ptr::null_mut(), len: 0};
+}
+
+#[no_mangle]
+/// Returns the local extrema points on a shape on multiple axis
+// Todo : wrap this in a static array to keep refs to correct axis
+pub extern "C" fn bezrs_shape_localextrema(_shape: *mut bezrsShape) -> bezrsFloatsRaw {
+	let shape = unsafe {
+        assert!(!_shape.is_null());
+        &mut *_shape
+    };
+
+    let extremas : [Vec<f64>; 2] = shape.sub_path.local_extrema();
+
+	if extremas.len() > 0 {
+		unsafe {
+			LAST_VEC_RAW = extremas.iter()
+				.zip([0, 1])
+				.flat_map(|(vec, _axis)| {
+					vec.iter().map(|&t_value|{
+						let f : f64 = t_value;
+						return f;
+					})
+				}).collect();
+				return bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
+		}
 	}
 
 	return bezrsFloatsRaw {data: ptr::null(), len: 0};
@@ -484,6 +547,12 @@ pub extern "C" fn bezrs_shape_containspoint(_shape: *mut bezrsShape, _pos : bezr
 	return contained; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
 }
 
+// Conversion utility for local to global tvalue transformation
+fn bezrs_local_to_global_tval(_shape: &Subpath<EmptyId>, seg : usize, t : f64) -> f64 {
+	let number_of_curves = _shape.len_segments() as f64;
+	return ((seg as f64) + t) / number_of_curves;
+}
+
 #[no_mangle]
 /// Returns positions where the shape self intersects
 pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _error_treshold : f64, _min_dist : f64) -> bezrsFloatsRaw {
@@ -492,11 +561,19 @@ pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _error_
         &mut *_shape
     };
 
-	let si = shape.sub_path.self_intersections(None, None);
+	let si = shape.sub_path.self_intersections(None, None);//Some(_error_treshold), Some(_min_dist));
+	//assert!(si.len() < 300); // todo: sometimes there's a crazy big vector returned, this assert may help debugging
 	if si.len() > 0 {
-		let flattened : Vec<f64> = si.iter().map(|(_x,f)| *f).collect();
-		let ret = bezrsFloatsRaw { data: flattened.as_ptr(), len: flattened.len() };
-		return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+		unsafe {
+			LAST_VEC_RAW = si.iter().filter(|(_seg_index, _tvalue)|(*_tvalue>=0. && *_tvalue<=1.)).map(|(_seg_index, _tvalue)|{
+				// todo : filter out wrong ones ?
+				//if *_tvalue<0. || *_tvalue>1. || *_seg_index>300 { continue; }// 300 = tmp
+
+				// Convert local tvalue to global tvalue
+				return bezrs_local_to_global_tval(&shape.sub_path, *_seg_index, *_tvalue);
+			}).collect();
+			return bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
+		}
 	}
 
 	return bezrsFloatsRaw {data: ptr::null(), len: 0};
