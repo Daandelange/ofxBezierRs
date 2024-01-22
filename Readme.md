@@ -13,8 +13,8 @@ Functions :
 - [x] Reversing winding direction
 - [x] Computing the bounding box of a shape
 - [x] Shape hit testing
-- [] Inflections
 - [] Find shape self intersections
+- [x] Inflections
 - [x] Evaluate a point on the shape (t-value)
 - [x] Normal from t-value
 - [x] Tangent from t-value

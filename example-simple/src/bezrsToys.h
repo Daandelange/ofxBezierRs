@@ -86,6 +86,18 @@ class hitTestToy : public bezrsToy {
 	glm::vec2 mouseProjection, simProjection;
 };
 
+class inflectionsToy : public bezrsToy {
+	public:
+	inflectionsToy() : bezrsToy("Inflections"){};
+	void applyFX(const bezierShape& _inShape, bezierShape& _outShape) override;
+	void drawParams(const bezierShape& _sh) override;
+
+	protected:
+	//bezrsRect bb;
+	std::vector<bezrsPos> inflections;
+	std::vector<bezrsPos> local_extremas;
+};
+
 class evaluateToy : public bezrsToy {
 	public:
 	evaluateToy() : bezrsToy("Evaluate TValue"){};

@@ -296,9 +296,62 @@ void hitTestToy::drawParams(const bezierShape& _sh){
     ofDrawCircle(mousePos, 5.f);
     ofDrawLine(mousePos, mouseProjection);
     ofNoFill();
+}
 
-    // Projections
+//--------------------------------------------------------------
+void inflectionsToy::applyFX(const bezierShape& _inShape, bezierShape& _outShape) {
+    // Create internal handle
+    bezrsShape* bezRsShape = sendShapeToBezRs(_inShape);
 
+    // Get inflections
+    bezrsFloatsRaw tValues = bezrs_shape_inflections(bezRsShape);
+    std::vector<double> floatsVec = floatsRawToVec(tValues);
+    inflections.clear();
+    for(const double& tval : floatsVec){
+        if(tval < 0. || tval > 1.) continue;
+        bezrsPos p = bezrs_shape_posfromtvalue(bezRsShape, tval);
+        inflections.push_back(p);
+    }
+
+    // Get local extremas
+    bezrsFloatsRaw tValuesLE = bezrs_shape_localextrema(bezRsShape);
+    std::vector<double> floatsVecLE = floatsRawToVec(tValuesLE);
+    local_extremas.clear();
+    for(const double& tval : floatsVecLE){
+        if(tval < 0. || tval > 1.) continue;
+        bezrsPos p = bezrs_shape_posfromtvalue(bezRsShape, tval);
+        local_extremas.push_back(p);
+    }
+
+    // Place rect in shape
+    _outShape.beziers = _inShape.beziers;//bezrs_beziers_from_rect(bb);
+    _outShape.bChanged = true;
+
+    // Destroy manually
+    bezrs_shape_destroy(bezRsShape);
+
+}
+
+void inflectionsToy::drawParams(const bezierShape& _sh){
+    glm::vec2 textPos = {50, ofGetHeight() - 50};
+    ofDrawBitmapStringHighlight("Calculates inflection points on the shape.", textPos.x, textPos.y);
+    textPos.y -= 30;
+    ofDrawBitmapStringHighlight("Inflection points (green): "+ofToString(inflections.size()), textPos.x, textPos.y);
+    textPos.y -= 30;
+    ofDrawBitmapStringHighlight("Local extremas (pink): "+ofToString(local_extremas.size()), textPos.x, textPos.y);
+    textPos.y -= 30;
+
+    ofSetColor(ofColor::green);
+    for(const bezrsPos& ip : inflections){
+        ofDrawCircle(ip.x, ip.y, 3);
+        ofDrawCircle(ip.x, ip.y, 6);
+    }
+
+    ofSetColor(ofColor::violet);
+    for(const bezrsPos& ip : local_extremas){
+        ofDrawCircle(ip.x, ip.y, 3);
+        ofDrawCircle(ip.x, ip.y, 6);
+    }
 
 }
 
