@@ -1,11 +1,13 @@
 # ofxBezierRs
-An OpenFrameworks wrapper for [bezier-rs](https://github.com/GraphiteEditor/Graphite/tree/master/libraries/bezier-rs) providing a set geometrical functions on cartesian planar Beziér paths or shapes.
+An OpenFrameworks wrapper for [bezier-rs](https://github.com/Keavon/Bezier-rs) providing a set geometrical functions on cartesian planar Beziér paths or shapes.
 In terms of algorithm, the Bezier-rs is quite close to `bezier.js` from [Pomax's research work](https://pomax.github.io/bezierinfo/).
 
 ## Early state
-Bezier-rs provides [plenty of functions](https://graphite.rs/libraries/bezier-rs/), not all are implemented yet.  
+Bezier-rs provides [plenty of functions](https://keavon.github.io/Bezier-rs/), not all are implemented yet.  
 Right now, consider this addon as a proof-of-concept for using libBezierRs with C++ code.  
 Tested on `osx 10.12 + OF 0.11.2` and `linux + OF 0.11.2`, the binaries are not yet bundled.
+
+Update dec 2025: Bezier-rs has been depreciated. Graphite now uses [Kubo](https://github.com/linebender/kurbo) which seems more performance-oriented, but it's also using a different vector data structure, which makes compatibility harder. While Bezier-rs won't evolve anymore, it's still a solid choice for 2d vector math operations. Over time I'll probably move to [lib2geom](https://gitlab.com/inkscape/lib2geom/), once they [ported boolean operations from Livarot](https://wiki.inkscape.org/wiki/Killing_Livarot).
 
 Functions :
 - [x] Shape offset
