@@ -3,7 +3,8 @@ An OpenFrameworks wrapper for [bezier-rs](https://github.com/Keavon/Bezier-rs) p
 In terms of algorithm, the Bezier-rs is quite close to `bezier.js` from [Pomax's research work](https://pomax.github.io/bezierinfo/).
 
 **Demo :**  
-![ofxSimpleApp Demo](https://raw.githubusercontent.com/Daandelange/ofxBezierRs/main/ofxBezierRs-proof-of-concept.gif)
+![ofxSimpleApp Demo](https://raw.githubusercontent.com/Daandelange/ofxBezierRs/main/ofxBezierRs-proof-of-concept.gif)  
+[Watch a video of the example](https://www.youtube.com/watch?v=NiYp7FLi8xA).
 
 ## Early state
 Bezier-rs provides [plenty of functions](https://keavon.github.io/Bezier-rs/), not all are implemented yet.  
