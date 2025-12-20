@@ -2,6 +2,8 @@
 An OpenFrameworks wrapper for [bezier-rs](https://github.com/Keavon/Bezier-rs) providing a set geometrical functions on cartesian planar Beziér paths or shapes.
 In terms of algorithm, the Bezier-rs is quite close to `bezier.js` from [Pomax's research work](https://pomax.github.io/bezierinfo/).
 
+[![Demo Video](https://raw.githubusercontent.com/Daandelange/ofxBezierRs/main/ofxBezierRs-proof-of-concept.jpg)](https://raw.githubusercontent.com/Daandelange/ofxBezierRs/main/ofxBezierRs-proof-of-concept.mp4)
+
 ## Early state
 Bezier-rs provides [plenty of functions](https://keavon.github.io/Bezier-rs/), not all are implemented yet.  
 Right now, consider this addon as a proof-of-concept for using libBezierRs with C++ code.  
