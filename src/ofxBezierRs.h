@@ -4,6 +4,13 @@
 #include <vector>
 #include "ofGraphicsBaseTypes.h"
 
+// Respect/use ofxImGui global enabler
+#ifdef ofxAddons_ENABLE_IMGUI
+#   ifndef OFXBEZRS_DEFINE_IMGUI_HELPERS
+#       define OFXBEZRS_DEFINE_IMGUI_HELPERS
+#   endif
+#endif
+
 // Glue
 bezrsPos to_bezrsPos(const glm::vec2& _pos);
 glm::vec2 to_glmVec2(const bezrsPos& _pos);
