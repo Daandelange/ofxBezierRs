@@ -12,8 +12,8 @@ homepage = "https://github.com/daandelange/ofxBezierRs"
 repository = "https://github.com/daandelange/ofxBezierRs"
 
 [dependencies]
-bezier-rs = "0.2.0"
-glam = "0.22"
+bezier-rs = "0.5.0"
+glam = "0.29"
 #glam = { version = "0.22", features = ["serde"] }
 #libc = "0.2"
 
@@ -30,3 +30,6 @@ strip = true # "debuginfo"
 codegen-units = 1 # force enable all, but slower
 panic = "abort" # Less detailed error messages for smaller binary
 
+[features]
+default = ["alternative_ffi_returns"]
+alternative_ffi_returns = []

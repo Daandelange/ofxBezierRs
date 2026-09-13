@@ -269,9 +269,26 @@ impl bezrsShape {
 	}
 }
 
+#[cfg(feature = "alternative_ffi_returns")]
+use std::cell::UnsafeCell;
+
+/// A wrapper to allow mutable static state in FFI while satisfying the Sync requirement.
+/// SAFETY: The C++ caller is responsible for not calling this function concurrently 
+/// from multiple threads, or for handling the race conditions on the returned pointer.
+#[cfg(feature = "alternative_ffi_returns")]
+struct FfiBuffer<T>(UnsafeCell<T>);
+
+// SAFETY: We explicitly document that concurrent access is the caller's responsibility.
+#[cfg(feature = "alternative_ffi_returns")]
+unsafe impl<T> Sync for FfiBuffer<T> {}
+
+#[cfg(feature = "alternative_ffi_returns")]
+static LAST_VEC_RAW: FfiBuffer<Vec<f64>> = FfiBuffer(UnsafeCell::new(Vec::new()));
+
 // Some unsafe mutable STATICS !
 // Used for ensuring memory stays alive until API calls
 // Prevents using Box() and UnBox() meccanisms like for the shape handle, which are the alternative
+#[cfg(not(feature = "alternative_ffi_returns"))]
 static mut LAST_VEC_RAW : Vec<f64> = vec![];
 
 #[no_mangle]
@@ -491,20 +508,37 @@ pub extern "C" fn bezrs_shape_boundingbox(_shape: *mut bezrsShape) -> bezrsRect 
 #[no_mangle]
 /// Returns the inflection points on a shape
 pub extern "C" fn bezrs_shape_inflections(_shape: *mut bezrsShape) -> bezrsFloatsRaw {
-	let shape = unsafe {
+    let shape = unsafe {
         assert!(!_shape.is_null());
         &mut *_shape
     };
 
-	unsafe {
-		LAST_VEC_RAW = shape.sub_path.inflections().clone();
-		if LAST_VEC_RAW.len() > 0 {
-			let ret = bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
-			return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
-		}
-	}
+    #[cfg(not(feature = "alternative_ffi_returns"))]
+    unsafe {
+        LAST_VEC_RAW = shape.sub_path.inflections().clone();
+        if !LAST_VEC_RAW.is_empty() {
+            let ret = bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
+            return ret; // Todo: is it memory-safe to return it like this ? (copied, but is the ownership transferred correctly ?)
+        }
+    }
 
-	return bezrsFloatsRaw {data: ptr::null_mut(), len: 0};
+    #[cfg(feature = "alternative_ffi_returns")]
+    {
+        // SAFETY: Single-threaded FFI access is guaranteed by the C++ caller.
+        let last_vec = unsafe { &mut *LAST_VEC_RAW.0.get() };
+        
+        *last_vec = shape.sub_path.inflections().clone();
+        
+        if !last_vec.is_empty() {
+            let ret = bezrsFloatsRaw { 
+                data: last_vec.as_mut_ptr(), 
+                len: last_vec.len() as SizeTC 
+            };
+            return ret;
+        }
+    }
+
+    return bezrsFloatsRaw {data: ptr::null_mut(), len: 0}
 }
 
 #[no_mangle]
@@ -518,17 +552,39 @@ pub extern "C" fn bezrs_shape_localextrema(_shape: *mut bezrsShape) -> bezrsFloa
 
     let extremas : [Vec<f64>; 2] = shape.sub_path.local_extrema();
 
-	if extremas.len() > 0 {
+	if !extremas.is_empty() {
+
+		#[cfg(not(feature = "alternative_ffi_returns"))]
 		unsafe {
-			LAST_VEC_RAW = extremas.iter()
-				.zip([0, 1])
-				.flat_map(|(vec, _axis)| {
-					vec.iter().map(|&t_value|{
-						let f : f64 = t_value;
-						return f;
-					})
-				}).collect();
-				return bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
+		    LAST_VEC_RAW = extremas.iter()
+		        .zip([0, 1])
+		        .flat_map(|(vec, _axis)| {
+		            vec.iter().map(|&t_value|{
+		                let f : f64 = t_value;
+		                f
+		            })
+		        }).collect();
+		    return bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
+		}
+
+		#[cfg(feature = "alternative_ffi_returns")]
+		{
+		    // SAFETY: Single-threaded FFI access is guaranteed by the C++ caller.
+		    let last_vec = unsafe { &mut *LAST_VEC_RAW.0.get() };
+		    
+		    *last_vec = extremas.iter()
+		        .zip([0, 1])
+		        .flat_map(|(vec, _axis)| {
+		            vec.iter().map(|&t_value|{
+		                let f : f64 = t_value;
+		                f
+		            })
+		        }).collect();
+		        
+		    return bezrsFloatsRaw { 
+		        data: last_vec.as_mut_ptr(), 
+		        len: last_vec.len() as SizeTC 
+		    };
 		}
 	}
 
@@ -563,9 +619,10 @@ pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _error_
 
 	let si = shape.sub_path.self_intersections(None, None);//Some(_error_treshold), Some(_min_dist));
 	//assert!(si.len() < 300); // todo: sometimes there's a crazy big vector returned, this assert may help debugging
-	if si.len() > 0 {
+	if !si.is_empty() {
+		#[cfg(not(feature = "alternative_ffi_returns"))]
 		unsafe {
-			LAST_VEC_RAW = si.iter().filter(|(_seg_index, _tvalue)|(*_tvalue>=0. && *_tvalue<=1.)).map(|(_seg_index, _tvalue)|{
+			LAST_VEC_RAW = si.iter().filter(|(_seg_index, _tvalue)|*_tvalue>=0. && *_tvalue<=1.).map(|(_seg_index, _tvalue)|{
 				// todo : filter out wrong ones ?
 				//if *_tvalue<0. || *_tvalue>1. || *_seg_index>300 { continue; }// 300 = tmp
 
@@ -574,6 +631,21 @@ pub extern "C" fn bezrs_shape_selfintersections(_shape: *mut bezrsShape, _error_
 			}).collect();
 			return bezrsFloatsRaw { data: LAST_VEC_RAW.as_mut_ptr(), len: LAST_VEC_RAW.len() as SizeTC };
 		}
+
+		#[cfg(feature = "alternative_ffi_returns")]
+	    {
+	        // SAFETY: Single-threaded FFI access is guaranteed by the C++ caller.
+	        let last_vec = unsafe { &mut *LAST_VEC_RAW.0.get() };
+	        
+	        *last_vec = si.iter().filter(|(_seg_index, _tvalue)|*_tvalue>=0. && *_tvalue<=1.).map(|(_seg_index, _tvalue)|{
+	            return bezrs_local_to_global_tval(&shape.sub_path, *_seg_index, *_tvalue);
+	        }).collect();
+	        
+	        return bezrsFloatsRaw { 
+	            data: last_vec.as_mut_ptr(), 
+	            len: last_vec.len() as SizeTC 
+	        };
+	    }
 	}
 
 	return bezrsFloatsRaw {data: ptr::null(), len: 0};
@@ -649,7 +721,7 @@ pub extern "C" fn bezrs_shape_project_pos(_shape: *mut bezrsShape, _pos : bezrsP
         &mut *_shape
     };
 
-	if let Some((_path_index, t_value)) = shape.sub_path.project( _pos.to_dvec2(), None ) {
+	if let Some((_path_index, t_value)) = shape.sub_path.project( _pos.to_dvec2() ) {
 		return bezrsPos::from_dvec2(&shape.sub_path.evaluate(SubpathTValue::Parametric { segment_index: _path_index, t: t_value }));
 	}
 
