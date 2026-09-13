@@ -49,8 +49,6 @@ void ofApp::draw(){
         textY+=30;
         ofDrawBitmapStringHighlight("To erase the last point hit backspace.", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
         textY+=30;
-        ofDrawBitmapStringHighlight("Pause any animations by holding RETURN", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
-        textY+=30;
         ofDrawBitmapStringHighlight("Gui Toggles: H=Help, I=Info", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
         textY+=30;
         ofDrawBitmapStringHighlight("Render Toggles: A=Animate, n=Numbers", 50, textY, ofColor(0,0,0,100), ofColor(255,255,255));
