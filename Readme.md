@@ -11,7 +11,12 @@ Bezier-rs provides [plenty of functions](https://keavon.github.io/Bezier-rs/), n
 Right now, consider this addon as a proof-of-concept for using libBezierRs with C++ code.  
 Tested on `osx 10.12 + OF 0.11.2` and `linux + OF 0.11.2`, the binaries are not yet bundled.
 
-Update dec 2025: Bezier-rs has been depreciated. Graphite now uses [Kubo](https://github.com/linebender/kurbo) which seems more performance-oriented, but it's also using a different vector data structure, which makes compatibility harder. While Bezier-rs won't evolve anymore, it's still a solid choice for 2d vector math operations. Over time I'll probably move to [lib2geom](https://gitlab.com/inkscape/lib2geom/), once they [ported boolean operations from Livarot](https://wiki.inkscape.org/wiki/Killing_Livarot).
+### Update dec 2025
+Bezier-rs has been [depreciated](https://github.com/Keavon/Bezier-rs#deprecation-notice). Graphite now uses [Kubo](https://github.com/linebender/kurbo) which seems more performance-oriented, but it's also using a different vector data structure, which makes compatibility harder. While Bezier-rs won't evolve anymore, it's still a solid choice for 2d vector math operations. Over time I'll probably move to [lib2geom](https://gitlab.com/inkscape/lib2geom/), once they [ported boolean operations from Livarot](https://wiki.inkscape.org/wiki/Killing_Livarot).
+
+### Update sept 2026
+ofxBezierRs has now also been depreciated, please refer to [ofxKurbo](https://raw.githubusercontent.com/Daandelange/ofxKurbo) as its successor !  
+Warning: Segment-based data and other minor "breaking" changes.
 
 Functions :
 - [x] Shape offset
